@@ -1,0 +1,179 @@
+<!-- <!DOCTYPE html>
+<html>
+<head> -->
+  {% extends "layout.html" %}
+  {% block head %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.1/chart.min.js"></script>
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js"></script>
+ 
+ <style>
+   .thegraph {
+      width:45%;
+      margin: 0 auto;
+      text-align: center;
+   }
+   </style>
+
+  {% endblock head %}
+<!-- </head>
+<body>  -->
+  
+  {% block content %}
+    <div class="thegraph">
+      <canvas id="mycanvas"></canvas> 
+      <canvas id="mycanvas2"></canvas>
+      </div>
+      <!-- <h1 style="text-align: center;"> current location <span id="Pose"> </span></h1> -->
+
+
+<script>
+
+function thetimelabel (){
+  var today = new Date();
+  var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+  var dateTime = date+' '+time;
+  return dateTime;
+}
+
+// create initial empty chart
+var ctx_live = document.getElementById("mycanvas");
+var myChart = new Chart(ctx_live, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      data: [],
+      borderWidth: 1,
+      borderColor:'#00c0ef',
+      label: 'x-linear',
+    }]
+  },
+  options: {
+    responsive: true,
+    title: {
+      display: true,
+      text: "Chart.js - Dynamically Update Chart Via Ajax Requests",
+    },
+    legend: {
+      display: false
+    },
+  }
+});
+
+var ctx_live2 = document.getElementById("mycanvas2");
+var myChart2 = new Chart(ctx_live2, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      data: [],
+      borderWidth: 1,
+      borderColor:'#00c0ef',
+      label: 'z-angular',
+    }]
+  },
+  options: {
+    responsive: true,
+    title: {
+      display: true,
+      text: "Chart.js - Dynamically Update Chart Via Ajax Requests",
+    },
+    legend: {
+      display: false
+    },
+  }
+});
+
+// // this post id drives the example data
+// // var postId = 1;
+
+// // logic to get new data
+// var getData = function() {
+//   $.ajax({
+//     url: "{{url_for('request_chartdata')}}",
+//     contentType:"application/x-www-form-urlencoded",
+//     method: 'GET',
+//     dataType:"json",
+//     // contentType:"application/json",
+//     data:"yes",
+//     success: function(datacallback) { 
+//       // process your data to pull out what you plan to use to update the chart
+//       // e.g. new label and a new data point
+//       console.log(datacallback.label)
+//       datacallback.label.forEach((item,index) => myChart.data.labels.push(item))
+//       datacallback.data.forEach((item,index) => myChart.data.datasets[0].data.push(item))
+      
+//     //   x.forEach((item,index) => y.push(item));
+//       // add new label and data point to chart's underlying data structures
+//     //   myChart.data.labels.push("Post " + postId++);
+//     //   myChart.data.datasets[0].data.push(getRandomIntInclusive(1, 25));
+      
+//       // re-render the chart
+//       myChart.update();
+//     },
+//     error: function(err){ console.log(err);}
+//   });
+// };
+
+// // get new data every 3 seconds
+// setInterval(getData, 3000);
+
+// function checklength(Mychart){
+//   if (Mychart.data.labels.length == 40){
+    
+//     ;
+//   }
+//   console.log(Mychart.data.labels.length);
+//   console.log(Mychart.data.datasets[0].data.length);
+//   return Mychart
+// }
+
+
+var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/odom',
+    messageType : 'nav_msgs/Odometry',
+    throttle_rate : 1500
+  });
+
+  listener.subscribe(function(message) {
+    console.log(typeof(message.header.stamp.secs));
+
+    myChart.data.labels.push(thetimelabel());
+    myChart.data.datasets[0].data.push(message.twist.twist.linear.x);
+    myChart2.data.labels.push(thetimelabel());
+    myChart2.data.datasets[0].data.push(message.twist.twist.angular.z);
+    
+  
+    
+    if (myChart.data.labels.length == 40){ myChart.data.labels.shift(); myChart.data.datasets[0].data.shift();}
+    if (myChart2.data.labels.length == 40){ myChart2.data.labels.shift(); myChart2.data.datasets[0].data.shift();}
+
+    myChart.update();
+    myChart2.update();
+    // listener.unsubscribe();
+
+    //change innerHTML
+    
+    var quaternion = new THREE.Quaternion(message.pose.pose.orientation.x,message.pose.pose.orientation.y,message.pose.pose.orientation.z,message.pose.pose.orientation.w)
+    var rotation = new THREE.Euler().setFromQuaternion( quaternion, 'XYZ' );
+   
+    // document.getElementById("Pose").innerHTML= `Pose: X: ${message.pose.pose.position.x.toFixed(2)} Y: ${message.pose.pose.position.y.toFixed(2)} Yaw: ${rotation.z.toFixed(2)}`
+  });
+
+
+  // new THREE.Euler( 0, 1, 1.57, 'XYZ' );
+
+
+</script>
+{% endblock content %}
+<!-- </body>
+</html> -->
+
+

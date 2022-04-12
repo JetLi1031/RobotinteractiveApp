@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+  {% block head %}
+    <meta charset="utf-8">
+     <meta name="viewport" content="width=device-width">
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.4.1/chart.min.js"></script>
+     <style>
+     
+    
+           /* For Chrome or Safari */
+           progress::-webkit-progress-bar {
+               background-color: #eeeeee;
+           }
+     
+           progress::-webkit-progress-value {
+               background-color: #3cfa3c !important;
+           }
+     
+     
+           /* For Firefox */
+           progress {
+               background-color: #eee;
+           }
+     
+           progress::-moz-progress-bar {
+               background-color: #039603 !important;
+           }
+     
+           /* For IE10 */
+           progress {
+               background-color: #eee;
+           }
+     
+           progress {
+               background-color: #039603;
+           }
+           
+           
+           
+          
+              .element {
+         width:65%;
+         margin: 0 auto;
+         text-align: center;
+           }
+           
+    
+          
+       </style>
+   
+   {% endblock head %}
+   {% block content %}
+     
+     <div class="element">
+     <p> the battery stats <span id="file1"></span>% </p> 
+     <p> 0% <progress id="file" value="50" max="100" style="width: 75%;" > 25% </progress> 100% </p><br><br>
+     <p> Robot cuurent nearby the <span id="proximity"> origin </span></p> 
+     <canvas id="mycanvasforbattery"></canvas> 
+     </div> 
+     
+     
+     
+     <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+     <script>
+     
+     var config = {
+     "apiKey": "ZP7Kj40OB47QGISM17xKYrsh2NJgd0i22uPSpx39",
+     "authDomain": "mitappinventordiffrobot.firebaseapp.com",
+     "databaseURL": "https://mitappinventordiffrobot-default-rtdb.firebaseio.com/",
+     "storageBucket": "mitappinventordiffrobot.appspot.com"
+     };
+     firebase.initializeApp(config);
+   
+     
+     
+     
+   const dbRef = firebase.database().ref();
+   
+    var retrievedata;
+    var batterypercent;
+    var nearbyplace = document.getElementById("proximity")
+    //chart definition 
+    var ctx_live = document.getElementById("mycanvasforbattery");
+    var myChart = new Chart(ctx_live, {
+     type: 'line',
+     data: {
+       labels: [],
+       datasets: [{
+         data: [],
+         borderWidth: 1,
+         borderColor:'#00c0ef',
+         label: 'the battery status',
+       }]
+     },
+     options: {
+   scales: {
+         yAxes: [{
+           ticks: {
+             beginAtZero: true,
+             min: 0,
+             max: 100,
+             stepSize: 20,
+           }
+         }]
+       },
+       responsive: true,
+       title: {
+         display: true,
+         text: "Chart.js - Dynamically Update Chart Via Ajax Requests",
+       },
+       legend: {
+         display: false
+       },
+     }
+   });
+   // handling request for checknig nearby location
+    dbRef.child("locationbeen").on('value',(snap)=>{
+      retrievedata = snap.val();
+      
+        var lastvalue = Object.values(retrievedata).slice(-1)[0];
+        var lastkey = Object.keys(retrievedata).slice(-1)[0];
+        nearbyplace.innerHTML = lastvalue + " at " + lastkey 
+        console.log();
+   
+     
+     });
+     
+   //checking current battery on database
+     dbRef.child("battery").on('value',(snap)=>{
+      batterypercent = snap.val();
+      document.getElementById("file").value = batterypercent;
+        console.log(batterypercent);
+        document.getElementById("file1").innerHTML = batterypercent;
+     });
+     
+     
+     dbRef.child("batterylog").limitToLast(15).on('value',(snap)=>{
+      batteryupdate = snap.val();
+       var lastbattvalue = Object.values(batteryupdate);
+       var lastbattkey = Object.keys(batteryupdate);
+       
+       
+       myChart.data.labels = lastbattkey
+       myChart.data.datasets[0].data = lastbattvalue
+   
+       myChart.update();
+     });
+     
+     
+     
+     
+     
+     
+       
+     </script>
+  
+     
+   {% endblock content %} 
+     
+     
+     
+     
+     
+   
+   

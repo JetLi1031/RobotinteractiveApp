@@ -1,0 +1,203 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+<title>HTML DOM touchstart event</title> -->
+{% extends "layout.html" %}
+{% block head %}
+<!-- <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='voicerecog.css') }}"> -->
+<style>
+   .controlform {
+      width:70%;
+      margin: 0 auto;
+      text-align: center;
+   }
+   /* * {
+      padding: 2px;
+      margin:5px;
+   } */
+   .tounch {
+      border-radius: 50%;
+      font-size: 20px;
+      padding: 20px;
+      border: 5px solid rgb(220, 53, 69);
+      background: rgba(220, 53, 69, 0.5);
+      color: #fefefe;
+   }
+   .slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 25px;
+  background: #020101;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #03c4ff;
+  cursor: pointer;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+{% endblock head %}
+<!-- </head>
+<body> -->
+  
+   {% block content %}
+   <form class="controlform">
+      <fieldset>
+         <legend>Teleop_Twist_KepPad</legend>
+         <input type="button" class="tounch" value="Up" ><br>
+         <input type="button" class="tounch" value="Left"> &emsp;
+         <input type="button" class="tounch" value="Right" ><br>
+         <input type="button" class="tounch" value="Down" > 
+         <!-- <div id="divDisplay">Hold On for 1 - sec to Win</div> -->
+         <div style="width:55%; margin:auto;"> 
+            <br>
+            <input type="range" min="0.1" max="0.4" value="0.2" step="0.025" class="slider" id="forwardratioID">
+            <p> The forward rate : <span id="forwarddisplay">0.2</span> m/s</p>
+            
+            <input type="range" min="0.25" max="1" value="0.75" step="0.025" class="slider" id="turnratioID">
+            <p > The turn ratio: <span id="turndisplay">0.75</span> rad/s </p>
+         </div>
+      </fieldset>
+   </form>
+
+
+   <p class="checkcommand" style="text-align: center;"> </p>
+
+   
+
+   <div style="text-align: center; margin: auto;">
+      <button class="start">Start command</button>
+      <button class="stop">Stop command</button>
+       <p class="output">...diagnostic messages</p>
+   </div>
+   
+   
+<script>
+var interval_id;
+var turnratio=1.5;
+var forwardratio=1.5;
+
+// to create ratio slider effect
+document.getElementById("forwardratioID").oninput = function(){forwardratio = parseFloat(this.value); document.getElementById("forwarddisplay").innerHTML=this.value;}
+document.getElementById("turnratioID").oninput = function(){turnratio = parseFloat(this.value); document.getElementById("turndisplay").innerHTML=this.value; }
+
+// create ros interface by connecting with web socket
+
+
+
+var cmdVel = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  });
+
+  var twist = new ROSLIB.Message({
+    linear : {
+      x : 0,
+      y : 0,
+      z : 0
+    },
+    angular : {
+      x : 0,
+      y : 0,
+      z : 0
+    }
+  });
+
+    const controlbutton = document.querySelectorAll(".tounch");
+   // display range of slider bar
+    for (var x=0;x<controlbutton.length;x++)
+    {//touchstart
+        controlbutton[x].addEventListener("touchstart",function(event){tounchstartevent("tounchstart",event.currentTarget.value)}); // a function in a anonymous function where anonymous could contain only the even triggered document
+        // also can be passed by using function(){tounchstartevent("tounchstart",this.value)
+        controlbutton[x].addEventListener("touchend",function(event){tounchstartevent("tounchend",event.currentTarget.value)});
+    }
+// converted to required value to publish
+   function valueconvert(eventidentity,myvalue){
+      if(eventidentity == "tounchstart"){eventidentity = 1;} 
+      if(eventidentity == "tounchend"){eventidentity =0;} 
+      if(myvalue == "Up" || myvalue == "Left"){myvalue =1;} 
+      if(myvalue == "Down" || myvalue == "Right"){myvalue =-1;} 
+      return {"pressed": eventidentity , "dir":myvalue}
+   }
+//detecting direction and call convert function 
+   function rosbrige_publishconverted(eventidentity,myvalue){
+      clearInterval(interval_id)
+      if(myvalue == "Up"|| myvalue =="Down"){
+         directObj = valueconvert(eventidentity,myvalue);
+         twist.linear.x = directObj.dir*directObj.pressed*forwardratio;
+      }
+      if(myvalue == "Left"||myvalue == "Right"){
+         directObj = valueconvert(eventidentity,myvalue);
+         twist.angular.z = directObj.dir*directObj.pressed*turnratio;
+      }
+      console.log(twist);
+      document.getElementsByClassName("checkcommand")[0].innerHTML = JSON.stringify(twist);
+      
+      // interval_id = setInteval(function(){ cmdVel.publish(twist); },20);
+      interval_id = setInterval(function(){ cmdVel.publish(twist); }, 20);
+      // cmdVel.publish(twist)
+   }
+
+   // initially though requried to sent through python flask server, was kept for further consideration
+   function tounchstartevent(eventidentity,myvalue) {
+    console.log(typeof(eventidentity));
+   var myObj = {}
+   myObj[eventidentity]=myvalue
+   console.log({eventidentity:myvalue});
+    $.ajax({
+    type: "POST",
+    url: "{{ url_for('get_post_json') }}",
+    contentType: "application/json",
+    data: JSON.stringify(myObj),
+    dataType: "json",
+    success: function(response) {
+        console.log(response);
+    },
+    error: function(err) {
+        console.log(err);
+    }
+});
+   // beside connected to python server also connected to rosbridge backend
+   rosbrige_publishconverted(eventidentity,myvalue);
+
+   }
+
+
+</script>
+<!-- import voice recognition package  -->
+<script src="{{url_for('static', filename='voicerecog.js')}}"></script>
+{% endblock content %} 
+<!-- </body>
+</html> -->
+<!--
+// function touchendevent() {
+ 
+   //  $.ajax({
+   //  type: "POST",
+   //  url: "{{ url_for('get_post_json') }}",
+   //  contentType: "application/json",
+   //  data: JSON.stringify({"tounchend":this.value}),
+   //  dataType: "json",
+   //  success: function(response) {
+   //      console.log(response);
+   //  },
+   //  error: function(err) {
+   //      console.log(err);
+   //  }
+   // });
+   // }
+   --> 
