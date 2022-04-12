@@ -1,10 +1,23 @@
 # ROBOT interactive APP
 
 ## robot navigtion panel
-![Alt Text](https://github.com/JetLi1031/RobotinteractiveApp/blob/main/navigate.gif)
+<p align="center">
+  <img 
+    src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/navigation.gif"
+  >
+</p>
 
 ## speed monitoring
-![Alt Text](https://github.com/JetLi1031/RobotinteractiveApp/blob/main/speedmonitor.gif)
+<p align="center">
+  <img 
+    src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/speedmonitor.gif"
+  >
+</p>
 
 ## control interface (voice recogniion)
-![Alt Text](https://github.com/JetLi1031/RobotinteractiveApp/blob/main/voicerecog.gif)
+![Alt Text]()
+<p align="center">
+  <img 
+    src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/voicerecog.gif"
+  >
+</p>
