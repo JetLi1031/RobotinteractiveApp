@@ -3,7 +3,7 @@
 ## robot navigtion panel
 <p align="center">
   <img 
-    src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/navigation.gif"
+    src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/navigate.gif"
   >
 </p>
 
@@ -15,7 +15,7 @@
 </p>
 
 ## control interface (voice recogniion)
-![Alt Text]()
+
 <p align="center">
   <img 
     src="https://github.com/JetLi1031/RobotinteractiveApp/blob/main/voicerecog.gif"
